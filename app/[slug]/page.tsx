@@ -6,15 +6,22 @@ import { buildArticleMetadata, articleJsonLd } from "@/lib/seo";
 import { getRelatedArticles } from "@/lib/related";
 import { RelatedPosts } from "@/components/RelatedPosts";
 import { SiteHeader } from "@/components/SiteHeader";
+import { getSiteByKey } from "@/lib/sites";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
+// IMPORTANT:
+// generateStaticParams runs at BUILD TIME.
+// There is no request, so do NOT use headers(), cookies(), etc here.
 export async function generateStaticParams() {
-  const site = await getCurrentSite();
+  const site = getSiteByKey(process.env.SITE_KEY);
   const articles = await getArticles(site.key);
-  return articles.map((article) => ({ slug: article.slug }));
+
+  return articles.map((article) => ({
+    slug: article.slug,
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -24,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (!article) {
     return {
-      title: "Not found"
+      title: "Not found",
     };
   }
 
@@ -74,7 +81,7 @@ export default async function ArticlePage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(articleJsonLd(site, article))
+          __html: JSON.stringify(articleJsonLd(site, article)),
         }}
       />
     </>
